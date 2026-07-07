@@ -1,0 +1,20 @@
+goat_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'goat.duckdb'
+      threads: 4
+
+    # When you're ready to point the exact same models at Supabase instead,
+    # this is the only other block you need — same dbt files, new target:
+    #
+    # prod:
+    #   type: postgres
+    #   host: <your-supabase-host>.supabase.co
+    #   user: postgres
+    #   password: "{{ env_var('SUPABASE_DB_PASSWORD') }}"
+    #   port: 5432
+    #   dbname: postgres
+    #   schema: public
+    #   threads: 4
