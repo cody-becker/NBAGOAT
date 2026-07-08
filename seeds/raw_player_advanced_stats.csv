@@ -1,0 +1,6 @@
+name,season,team,positions,age,games_played,minutes_played,player_efficiency_rating,true_shooting_percentage,usage_percentage,offensive_win_shares,defensive_win_shares,win_shares,win_shares_per_48_minutes,offensive_box_plus_minus,defensive_box_plus_minus,box_plus_minus,value_over_replacement_player
+Michael Jordan,1988,CHI,SHOOTING GUARD,24,82,3311,31.7,0.603,32.8,10.8,5.5,16.3,0.236,8.5,3.2,11.7,8.9
+LeBron James,2009,CLE,SMALL FORWARD,24,81,3054,31.7,0.591,32.7,10.9,4.9,15.8,0.249,9.2,2.4,11.6,9.5
+Wilt Chamberlain,1962,PHW,CENTER,25,80,3882,31.8,0.518,32.6,9.1,4.8,13.9,0.172,6.8,2.1,8.9,7.2
+Magic Johnson,1987,LAL,POINT GUARD,27,80,2904,25.4,0.610,23.8,9.4,3.9,13.3,0.220,7.1,1.8,8.9,7.0
+Nikola Jokic,2022,DEN,CENTER,26,74,2476,32.9,0.651,30.1,7.6,4.8,12.4,0.241,9.8,2.6,12.4,8.7
