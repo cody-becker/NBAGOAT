@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NBA GOAT — adjust the lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12151A;
+    --panel: #1A1E25;
+    --panel-raised: #20252D;
+    --wood: #C17F3E;
+    --wood-dim: #7A5530;
+    --chalk: #EDEAE7;
+    --led: #E8432E;
+    --slate: #7A8290;
+    --line: #2A2F38;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+
+  body{
+    background: var(--bg);
+    color: var(--chalk);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  a { color: inherit; }
+
+  /* ---------- Header ---------- */
+  header{
+    padding: 48px 32px 24px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--wood);
+    margin: 0 0 14px;
+  }
+  h1{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 52px);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+    line-height: 1.05;
+  }
+  .sub{
+    color: var(--slate);
+    font-size: 15px;
+    max-width: 640px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .sub strong{ color: var(--chalk); font-weight: 600; }
+
+  /* ---------- Layout ---------- */
+  main{
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 8px 32px 80px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 860px){
+    main{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Console (fader panel) ---------- */
+  .console{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px 20px 24px;
+    position: sticky;
+    top: 24px;
+  }
+  @media (max-width: 860px){ .console{ position: static; } }
+
+  .console-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin: 0 0 20px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .faders{
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 4px;
+  }
+
+  .fader{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 58px;
+  }
+
+  .fader-readout{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--led);
+    margin-bottom: 10px;
+    min-height: 18px;
+    font-weight: 500;
+  }
+
+  .fader-track-wrap{
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  input[type="range"].vertical{
+    writing-mode: vertical-lr;
+    direction: rtl;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 6px;
+    height: 220px;
+    background: linear-gradient(to top, var(--wood) 0%, var(--wood-dim) 100%);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"].vertical.disabled{
+    background: var(--line);
+    cursor: not-allowed;
+  }
+  input[type="range"].vertical::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    width: 26px;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--chalk);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  input[type="range"].vertical:focus-visible::-webkit-slider-thumb{
+    outline: 2px solid var(--led);
+    outline-offset: 2px;
+  }
+  input[type="range"].vertical::-moz-range-thumb{
+    width: 26px;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--chalk);
+    border: none;
+    cursor: pointer;
+  }
+  input[type="range"].vertical.disabled::-webkit-slider-thumb{
+    background: var(--slate);
+  }
+
+  .fader-name{
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .fader-tag{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--slate);
+    margin-top: 3px;
+    text-align: center;
+  }
+  .fader.disabled .fader-name{ color: var(--slate); }
+
+  .console-footnote{
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--slate);
+  }
+
+  /* ---------- Search ---------- */
+  .toolbar{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .toolbar-count{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--slate);
+  }
+  #search{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 9px 14px;
+    border-radius: 7px;
+    width: 220px;
+    outline: none;
+  }
+  #search:focus-visible{ border-color: var(--wood); }
+  #search::placeholder{ color: var(--slate); }
+
+  /* ---------- Leaderboard ---------- */
+  .board{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .board-head, .row{
+    display: grid;
+    grid-template-columns: 44px 1fr 88px 76px 76px 76px 76px;
+    gap: 10px;
+    align-items: center;
+    padding: 11px 18px;
+  }
+  @media (max-width: 640px){
+    .board-head, .row{
+      grid-template-columns: 32px 1fr 70px 0 0 0 0;
+    }
+    .col-peak, .col-winning, .col-era{ display:none; }
+  }
+  .board-head{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    border-bottom: 1px solid var(--line);
+  }
+  .row{
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .row:last-child{ border-bottom: none; }
+  .rank{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    color: var(--wood);
+    font-size: 15px;
+  }
+  .name{ font-weight: 500; }
+  .season{
+    color: var(--slate);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+  .composite{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--led);
+    font-weight: 500;
+    text-align: right;
+  }
+  .stat{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--slate);
+    text-align: right;
+    font-size: 13px;
+  }
+  .stat.na{ opacity: 0.4; }
+
+  .empty{
+    padding: 40px 18px;
+    text-align: center;
+    color: var(--slate);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">NBAGOAT / player-season leaderboard</p>
+  <h1>Set the mix.<br>See who's the GOAT.</h1>
+  <p class="sub">
+    There's no single correct GOAT list — just a blend of what you value.
+    Drag the faders to weight <strong>peak dominance</strong>, <strong>winning impact</strong>,
+    and <strong>era influence</strong>, and the leaderboard re-ranks live. This currently ranks
+    individual <strong>player-seasons</strong>, not full careers — a proper career view is still
+    on the way.
+  </p>
+</header>
+
+<main>
+  <div class="console">
+    <p class="console-label"><span>Mix</span><span>Weight</span></p>
+    <div class="faders" id="faders"></div>
+    <p class="console-footnote">
+      Longevity is greyed out — that model isn't built yet, so it can't contribute
+      to the mix. Everything else here is real, computed data from three pulled
+      seasons: 1996-97, 2008-09, 2021-22.
+    </p>
+  </div>
+
+  <div>
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Search a player…" autocomplete="off" />
+      <p class="toolbar-count" id="count"></p>
+    </div>
+    <div class="board">
+      <div class="board-head">
+        <span>#</span>
+        <span>Player</span>
+        <span class="composite" style="text-align:right">Mix</span>
+        <span class="stat col-peak">Peak</span>
+        <span class="stat col-winning">Win</span>
+        <span class="stat col-era">Era</span>
+        <span class="stat">Long</span>
+      </div>
+      <div id="rows"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const WEIGHTS = { peak_z: 35, winning_z: 30, era_score: 20, longevity_z: 15 };
+const FADER_META = [
+  { key: 'peak_z',     label: 'Peak',      tag: 'peak_z',     disabled: false },
+  { key: 'winning_z',  label: 'Winning',   tag: 'winning_z',  disabled: false },
+  { key: 'era_score',  label: 'Era',       tag: 'era_score',  disabled: false },
+  { key: 'longevity_z',label: 'Longevity', tag: 'coming soon',disabled: true  },
+];
+
+let allRows = [];
+let searchTerm = '';
+
+const fadersEl = document.getElementById('faders');
+const rowsEl = document.getElementById('rows');
+const countEl = document.getElementById('count');
+const searchEl = document.getElementById('search');
+
+function buildFaders(){
+  FADER_META.forEach(meta => {
+    const wrap = document.createElement('div');
+    wrap.className = 'fader' + (meta.disabled ? ' disabled' : '');
+
+    const readout = document.createElement('div');
+    readout.className = 'fader-readout';
+    readout.textContent = meta.disabled ? '—' : WEIGHTS[meta.key];
+
+    const trackWrap = document.createElement('div');
+    trackWrap.className = 'fader-track-wrap';
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.className = 'vertical' + (meta.disabled ? ' disabled' : '');
+    input.min = 0;
+    input.max = 100;
+    input.value = meta.disabled ? 0 : WEIGHTS[meta.key];
+    input.disabled = meta.disabled;
+    input.setAttribute('aria-label', meta.label + ' weight');
+
+    input.addEventListener('input', () => {
+      WEIGHTS[meta.key] = Number(input.value);
+      readout.textContent = WEIGHTS[meta.key];
+      render();
+    });
+
+    trackWrap.appendChild(input);
+
+    const name = document.createElement('div');
+    name.className = 'fader-name';
+    name.textContent = meta.label;
+
+    const tag = document.createElement('div');
+    tag.className = 'fader-tag';
+    tag.textContent = meta.tag;
+
+    wrap.appendChild(readout);
+    wrap.appendChild(trackWrap);
+    wrap.appendChild(name);
+    wrap.appendChild(tag);
+    fadersEl.appendChild(wrap);
+  });
+}
+
+function computeComposite(row){
+  let weightedSum = 0;
+  let weightTotal = 0;
+  ['peak_z','winning_z','era_score','longevity_z'].forEach(key => {
+    const val = row[key];
+    const w = WEIGHTS[key];
+    if (val !== null && val !== undefined && w > 0){
+      weightedSum += val * w;
+      weightTotal += w;
+    }
+  });
+  return weightTotal > 0 ? weightedSum / weightTotal : null;
+}
+
+function fmt(val){
+  if (val === null || val === undefined) return null;
+  return val.toFixed(2);
+}
+
+function render(){
+  const term = searchTerm.trim().toLowerCase();
+
+  const scored = allRows
+    .map(r => ({ ...r, composite: computeComposite(r) }))
+    .filter(r => r.composite !== null)
+    .filter(r => !term || r.player_name.toLowerCase().includes(term))
+    .sort((a, b) => b.composite - a.composite)
+    .slice(0, 100);
+
+  countEl.textContent = term
+    ? `${scored.length} match${scored.length === 1 ? '' : 'es'}`
+    : `Top 100 of ${allRows.length} player-seasons`;
+
+  rowsEl.innerHTML = '';
+
+  if (scored.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'No players match that search.';
+    rowsEl.appendChild(empty);
+    return;
+  }
+
+  scored.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const peak = fmt(r.peak_z);
+    const winning = fmt(r.winning_z);
+    const era = fmt(r.era_score);
+    const longevity = fmt(r.longevity_z);
+
+    row.innerHTML = `
+      <span class="rank">${i + 1}</span>
+      <span><span class="name">${r.player_name}</span><span class="season">${r.season}</span></span>
+      <span class="composite">${fmt(r.composite)}</span>
+      <span class="stat col-peak ${peak === null ? 'na' : ''}">${peak ?? '—'}</span>
+      <span class="stat col-winning ${winning === null ? 'na' : ''}">${winning ?? '—'}</span>
+      <span class="stat col-era ${era === null ? 'na' : ''}">${era ?? '—'}</span>
+      <span class="stat ${longevity === null ? 'na' : ''}">${longevity ?? '—'}</span>
+    `;
+    rowsEl.appendChild(row);
+  });
+}
+
+searchEl.addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  render();
+});
+
+buildFaders();
+
+fetch('player_scores.json')
+  .then(res => res.json())
+  .then(data => {
+    allRows = data;
+    render();
+  })
+  .catch(err => {
+    rowsEl.innerHTML = '<div class="empty">Could not load player_scores.json — make sure it sits in the same folder as this file.</div>';
+    console.error(err);
+  });
+</script>
+
+</body>
+</html>
