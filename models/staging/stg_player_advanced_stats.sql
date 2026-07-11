@@ -1,11 +1,21 @@
 -- Staging: rename, cast, nothing clever yet.
 -- Source: Basketball-Reference (via basketball_reference_web_scraper), not nba_api.
--- Join key note: this table has NO player_id - Basketball-Reference doesn't share
--- an ID system with nba_api at all. Downstream models join on name + season instead.
+-- Join key note: for MODERN seasons (nba_api backbone), this table has no
+-- shared ID with nba_api - int_player_advanced_join joins on name + season.
+-- For OLD-era seasons (BR is the entire backbone), slug IS a shared, clean
+-- ID against stg_player_basic_totals_old - no fuzzy name matching needed
+-- there at all, since both sides come from BR and share the same slug.
 
 select
+    slug,
     name                                        as player_name,
-    strip_accents(replace(name, '.', ''))        as player_name_key,
+    regexp_replace(
+        regexp_replace(
+            lower(strip_accents(replace(replace(replace(name, '.', ''), '''', ''), '-', ''))),
+            '\s+(jr|sr|ii|iii|iv|v)$', ''
+        ),
+        '\s[a-z]\s', ' ', 'g'
+    )                                           as player_name_key,
     season,
     team,
     positions,

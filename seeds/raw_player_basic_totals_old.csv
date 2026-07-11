@@ -1,0 +1,5 @@
+slug,name,season,team,games_played,min_per_game,pts_per_game,reb_per_game,ast_per_game,stl_per_game,blk_per_game,tov_per_game
+oldstar01,Old Star A,1990-91,OLDTEAM A,82,38.0,32.0,6.0,5.5,2.0,0.6,2.8
+oldrole01,Old Role A1,1990-91,OLDTEAM A,75,22.0,9.0,4.0,1.8,0.7,0.2,1.1
+oldbig01,Old Big B,1990-91,OLDTEAM B,80,34.0,24.0,11.5,3.0,1.0,2.2,2.6
+oldrole02,Old Role B1,1990-91,OLDTEAM B,70,20.0,7.5,3.8,1.4,0.6,0.2,1.0

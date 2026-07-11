@@ -21,14 +21,18 @@
 -- BR data has been pulled for. Anyone unmatched, or from a season not yet
 -- ingested, gets NULL here - that's an honest gap, not silently papered over.
 --
--- games_played >= 20 filter: BPM/PER are RATE stats - with a tiny sample
--- (a few games, a handful of minutes), one bad possession swings the rate
--- wildly and produces numbers that look extreme but mean nothing (checked
--- the real data: a 2-game sample producing a -42.6 BPM, a 1-game sample
--- producing +97.4). Left unfiltered, these outliers don't just make their
--- own row meaningless - they drag the population mean/stddev used to
--- z-score EVERYONE, since there's no partition here. 20 games is a
--- judgment call, not a rigorously derived cutoff - adjust if you want.
+-- total minutes >= 500 filter: BPM/PER are RATE stats - with a tiny real
+-- sample, one bad possession swings the rate wildly and produces numbers
+-- that look extreme but mean nothing. The original version of this filter
+-- only checked games_played >= 20, which missed a real category of players:
+-- someone can appear in 20+ games while playing 2-3 garbage-time minutes
+-- each - technically "20 games," but still almost no real sample. Confirmed
+-- this directly: cranking peak_z/winning_z weight to zero surfaced players
+-- like Patrick Baldwin Jr. and Reece Beekman topping era_score despite
+-- negative peak/winning scores - the exact thin-sample distortion this
+-- filter was supposed to catch, just from the minutes angle instead of the
+-- games angle. 500 total minutes is a judgment call, not a rigorously
+-- derived cutoff - adjust if you want.
 
 with era_inputs as (
 
@@ -41,7 +45,7 @@ with era_inputs as (
     from {{ ref('int_player_advanced_join') }}
     where bpm is not null
       and ts_pct is not null
-      and games_played >= 20
+      and (games_played * min_per_game) >= 500
 
 ),
 

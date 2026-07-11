@@ -3,6 +3,11 @@
 -- z-score mechanic end to end. In the real project this exact pattern
 -- (a window function comparing each player against the full population)
 -- gets applied separately to peak, winning impact, era influence, longevity.
+--
+-- Sources from int_player_basic_unified, not stg_player_season_totals
+-- directly, so this covers BOTH modern (nba_api) and old-era (Basketball-
+-- Reference) rows with the same formula. player_id is text here since it
+-- mixes two different ID schemes - see int_player_basic_unified for why.
 
 with scored as (
 
@@ -16,7 +21,7 @@ with scored as (
             + coalesce(stl_per_game, 0)
             + coalesce(blk_per_game, 0)
             - coalesce(tov_per_game, 0)                as composite_raw
-    from {{ ref('stg_player_season_totals') }}
+    from {{ ref('int_player_basic_unified') }}
 
 )
 

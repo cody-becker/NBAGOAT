@@ -10,6 +10,11 @@
 -- a ball-dominant guard racking up empty-ish stats on a mediocre team gets
 -- a small win_pct multiplier; an efficient star carrying a big share of a
 -- winning team's output gets a large one — even at identical raw stats.
+--
+-- Sources from the unified basic-stats and team-standings models, so this
+-- covers both modern (nba_api) and old-era (Basketball-Reference) rows -
+-- team_key differs by source but each row only ever joins against its own
+-- source's team table, so the mismatched ID schemes never collide.
 
 with player_composite as (
 
@@ -17,33 +22,33 @@ with player_composite as (
         c.player_id,
         c.player_name,
         c.season,
-        s.team_id,
+        u.team_key,
         c.composite_raw
     from {{ ref('int_player_composite_demo') }} c
-    inner join {{ ref('stg_player_season_totals') }} s
-        on c.player_id = s.player_id
-        and c.season = s.season
+    inner join {{ ref('int_player_basic_unified') }} u
+        on c.player_id = u.player_id
+        and c.season = u.season
 
 ),
 
 team_totals as (
 
     select
-        team_id,
+        team_key,
         season,
         sum(composite_raw) as team_composite_total
     from player_composite
-    group by team_id, season
+    group by team_key, season
 
 ),
 
 team_records as (
 
     select
-        team_id,
+        team_key,
         season,
         win_pct
-    from {{ ref('stg_team_season_records') }}
+    from {{ ref('int_team_standings_unified') }}
 
 ),
 
@@ -57,10 +62,10 @@ winning_raw as (
             * r.win_pct                                        as winning_impact_raw
     from player_composite p
     inner join team_totals t
-        on p.team_id = t.team_id
+        on p.team_key = t.team_key
         and p.season = t.season
     inner join team_records r
-        on p.team_id = r.team_id
+        on p.team_key = r.team_key
         and p.season = r.season
 
 )
