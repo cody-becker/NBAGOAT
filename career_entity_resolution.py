@@ -93,12 +93,29 @@ results = results.merge(
 
 results = results.rename(columns={"year_l": "year_modern", "year_r": "year_old"})
 
-# Names manually verified by hand (real career story confirmed via search) -
-# tracked explicitly rather than silently collapsed into a single yes/no,
-# so a future "this stat looks weird" investigation doesn't have to redo
-# this whole verification from scratch
-manually_confirmed = {"Andrew Gaze", "Thurl Bailey", "John Amaechi", "John Salley"}
+# Names manually verified by hand - either via real career-history research
+# (Andrew Gaze, Thurl Bailey, John Amaechi, John Salley) or, more
+# authoritatively, by checking nba_api's own FROM_YEAR/TO_YEAR record
+# directly for the exact player_id in question (the other six)
+manually_confirmed = {
+    "Andrew Gaze", "Thurl Bailey", "John Amaechi", "John Salley",
+    "Larry Robinson", "Adonis Jordan", "Charles Shackleford",
+    "Negele Knight", "Thomas Hamilton", "Fred Vinson",
+}
 results["manually_reviewed"] = results["name_old"].isin(manually_confirmed)
+
+# Pairs verified as NOT the same person, checked directly against nba_api's
+# authoritative record. modern_player_id 1520 is a genuine THIRD Charles
+# Smith (guard, FROM_YEAR 1997) - unrelated to either old-era candidate,
+# whose careers ran 1988-1997ish and pre-1992 respectively. A real,
+# confirmed false positive, not just a low-confidence guess - excluded
+# entirely rather than left in the crosswalk at any confidence level.
+excluded_pairs = {("smithch01", 1520), ("smithch02", 1520)}
+results = results[
+    ~results.apply(
+        lambda r: (str(r["old_player_id"]), int(r["modern_player_id"])) in excluded_pairs, axis=1
+    )
+]
 
 results = results[[
     "old_player_id", "modern_player_id", "name_old", "name_modern",
@@ -115,12 +132,3 @@ print(f"Worth a human look (<0.80): {(results['match_probability'] < 0.80).sum()
 print()
 print("--- Everything under 0.80, sorted worst first ---")
 print(results[results["match_probability"] < 0.80].sort_values("match_probability").to_string(index=False))
-
-from nba_api.stats.endpoints import commonplayerinfo
-import time
-
-ids = [1683, 1817, 1593, 1861, 676, 1844]  # robinla01, jordaad01, shackch01, knighne01, hamilth01, vinsofr01
-for pid in ids:
-    df = commonplayerinfo.CommonPlayerInfo(player_id=pid).get_data_frames()[0]
-    print(df[['PERSON_ID','DISPLAY_FIRST_LAST','FROM_YEAR','TO_YEAR','POSITION']].to_string(index=False))
-    time.sleep(0.6)  # be polite to the endpoint

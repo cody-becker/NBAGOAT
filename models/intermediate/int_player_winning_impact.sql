@@ -3,31 +3,39 @@
 -- score every player on a good roster identically). Credit them in
 -- proportion to how much of that team's total production was theirs.
 --
--- winning_impact_raw = (player's share of team's total composite output)
+-- winning_impact_raw = (player's share of team's total win_shares)
 --                       * team win_pct
 --
--- This is exactly what's supposed to close the Murray/Young/Davis gap:
--- a ball-dominant guard racking up empty-ish stats on a mediocre team gets
--- a small win_pct multiplier; an efficient star carrying a big share of a
--- winning team's output gets a large one — even at identical raw stats.
+-- Uses real win_shares (Basketball-Reference), not the naive equal-weighted
+-- counting-stat sum this model used to rely on via int_player_composite_demo.
+-- That naive formula had the EXACT same rebounding-bias problem that made
+-- Karl Malone/Shaq look inflated relative to Jordan's real MVP-caliber
+-- 1996-97 season - it was fixed for peak_z, but kept quietly powering this
+-- model's "team share" concept until now.
 --
--- Sources from the unified basic-stats and team-standings models, so this
--- covers both modern (nba_api) and old-era (Basketball-Reference) rows -
--- team_key differs by source but each row only ever joins against its own
--- source's team table, so the mismatched ID schemes never collide.
+-- Raw win_shares specifically (not the per-48 rate used for peak_z) is
+-- deliberate: this calculation needs a countable quantity that can be
+-- meaningfully SUMMED across an entire roster to represent "team total
+-- output" - exactly the property a rate stat can't provide, and exactly
+-- why peak_z and this model can't just share one column.
+--
+-- Real, honest tradeoff: this now requires a Basketball-Reference match,
+-- same as peak_z and era_score. A player without one loses winning_z too -
+-- an accepted gap, not silently papered over.
 
-with player_composite as (
+with player_win_shares as (
 
     select
-        c.player_id,
-        c.player_name,
-        c.season,
+        j.player_id,
+        j.player_name,
+        j.season,
         u.team_key,
-        c.composite_raw
-    from {{ ref('int_player_composite_demo') }} c
+        j.win_shares
+    from {{ ref('int_player_advanced_join') }} j
     inner join {{ ref('int_player_basic_unified') }} u
-        on c.player_id = u.player_id
-        and c.season = u.season
+        on j.player_id = u.player_id
+        and j.season = u.season
+    where j.win_shares is not null
 
 ),
 
@@ -36,8 +44,8 @@ team_totals as (
     select
         team_key,
         season,
-        sum(composite_raw) as team_composite_total
-    from player_composite
+        sum(win_shares) as team_win_shares_total
+    from player_win_shares
     group by team_key, season
 
 ),
@@ -58,9 +66,9 @@ winning_raw as (
         p.player_id,
         p.player_name,
         p.season,
-        (p.composite_raw / nullif(t.team_composite_total, 0))
+        (p.win_shares / nullif(t.team_win_shares_total, 0))
             * r.win_pct                                        as winning_impact_raw
-    from player_composite p
+    from player_win_shares p
     inner join team_totals t
         on p.team_key = t.team_key
         and p.season = t.season
