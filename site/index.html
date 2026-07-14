@@ -301,9 +301,9 @@
   <p class="sub">
     There's no single correct GOAT list — just a blend of what you value.
     Drag the faders to weight <strong>peak dominance</strong>, <strong>winning impact</strong>,
-    and <strong>era influence</strong>, and the leaderboard re-ranks live. This currently ranks
-    individual <strong>player-seasons</strong>, not full careers — a proper career view is still
-    on the way.
+    <strong>era influence</strong>, and <strong>longevity</strong>, and the leaderboard re-ranks
+    live. This currently ranks individual <strong>player-seasons</strong>, not full careers — a
+    proper career view is still on the way.
   </p>
 </header>
 
@@ -312,9 +312,10 @@
     <p class="console-label"><span>Mix</span><span>Weight</span></p>
     <div class="faders" id="faders"></div>
     <p class="console-footnote">
-      Longevity is greyed out — that model isn't built yet, so it can't contribute
-      to the mix. Everything else here is real, computed data from three pulled
-      seasons: 1996-97, 2008-09, 2021-22.
+      All four faders are real, computed data now — peak dominance, winning
+      impact, era influence, and longevity. Spanning 1973-74 through
+      2025-26, using nba_api for 1996-97 onward and Basketball-Reference as
+      the full backbone for everything before that.
     </p>
   </div>
 
@@ -344,7 +345,7 @@ const FADER_META = [
   { key: 'peak_z',     label: 'Peak',      tag: 'peak_z',     disabled: false },
   { key: 'winning_z',  label: 'Winning',   tag: 'winning_z',  disabled: false },
   { key: 'era_score',  label: 'Era',       tag: 'era_score',  disabled: false },
-  { key: 'longevity_z',label: 'Longevity', tag: 'coming soon',disabled: true  },
+  { key: 'longevity_z',label: 'Longevity', tag: 'longevity_z', disabled: false },
 ];
 
 let allRows = [];
