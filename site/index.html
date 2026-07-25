@@ -305,6 +305,70 @@
     color: var(--slate);
     font-size: 14px;
   }
+
+  /* ---------- Detail view ---------- */
+  .back-btn{
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--slate);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  .back-btn:hover{ border-color: var(--wood); color: var(--chalk); }
+
+  .detail-name{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(26px, 4vw, 38px);
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .detail-span{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--slate);
+    font-size: 13px;
+    margin: 0 0 28px;
+  }
+  .detail-mix-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin: 0 0 4px;
+  }
+  .detail-composite{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--led);
+    font-size: 40px;
+    font-weight: 500;
+    margin: 0 0 32px;
+  }
+  .detail-stats{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-stat-row{
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .detail-stat-row:last-child{ border-bottom: none; }
+  .detail-stat-row span:last-child{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--slate);
+  }
+
+  .row{ cursor: pointer; }
+  .row:hover{ background: var(--panel-raised); }
 </style>
 </head>
 <body>
@@ -335,7 +399,7 @@
     <button id="copyLink" class="copy-link-btn">Copy this mix as a link</button>
   </div>
 
-  <div>
+  <div id="listView">
     <div class="toolbar">
       <input id="search" type="text" placeholder="Search a player…" autocomplete="off" />
       <p class="toolbar-count" id="count"></p>
@@ -351,6 +415,32 @@
         <span class="stat">Long</span>
       </div>
       <div id="rows"></div>
+    </div>
+  </div>
+
+  <div id="detailView" style="display:none;">
+    <button id="backToList" class="back-btn">&larr; Back to leaderboard</button>
+    <h2 id="detailName" class="detail-name"></h2>
+    <p id="detailSpan" class="detail-span"></p>
+    <p class="detail-mix-label">Current mix, at today's slider weights</p>
+    <p id="detailComposite" class="detail-composite"></p>
+    <div class="detail-stats">
+      <div class="detail-stat-row">
+        <span>Peak dominance</span>
+        <span id="detailPeak"></span>
+      </div>
+      <div class="detail-stat-row">
+        <span>Winning impact</span>
+        <span id="detailWinning"></span>
+      </div>
+      <div class="detail-stat-row">
+        <span>Era influence</span>
+        <span id="detailEra"></span>
+      </div>
+      <div class="detail-stat-row">
+        <span>Longevity</span>
+        <span id="detailLongevity"></span>
+      </div>
     </div>
   </div>
 </main>
@@ -370,6 +460,11 @@ let searchTerm = '';
 const fadersEl = document.getElementById('faders');
 const rowsEl = document.getElementById('rows');
 const countEl = document.getElementById('count');
+const listViewEl = document.getElementById('listView');
+const detailViewEl = document.getElementById('detailView');
+
+let currentView = 'list';
+let selectedPlayer = null;
 const searchEl = document.getElementById('search');
 
 function readWeightsFromURL(){
@@ -457,7 +552,31 @@ function fmt(val){
   return val.toFixed(2);
 }
 
+function renderDetail(){
+  listViewEl.style.display = 'none';
+  detailViewEl.style.display = 'block';
+
+  const composite = computeComposite(selectedPlayer);
+
+  document.getElementById('detailName').textContent = selectedPlayer.player_name;
+  document.getElementById('detailSpan').textContent =
+    `Prime: ${selectedPlayer.prime_span_start} – ${selectedPlayer.prime_span_end} (${selectedPlayer.prime_season_count} season${selectedPlayer.prime_season_count === 1 ? '' : 's'})`;
+  document.getElementById('detailComposite').textContent = fmt(composite) ?? '—';
+  document.getElementById('detailPeak').textContent = fmt(selectedPlayer.peak_z) ?? '—';
+  document.getElementById('detailWinning').textContent = fmt(selectedPlayer.winning_z) ?? '—';
+  document.getElementById('detailEra').textContent = fmt(selectedPlayer.era_score) ?? '—';
+  document.getElementById('detailLongevity').textContent = fmt(selectedPlayer.longevity_z) ?? '—';
+}
+
 function render(){
+  if (currentView === 'detail'){
+    renderDetail();
+    return;
+  }
+
+  listViewEl.style.display = 'block';
+  detailViewEl.style.display = 'none';
+
   const term = searchTerm.trim().toLowerCase();
 
   const scored = allRows
@@ -484,6 +603,7 @@ function render(){
   scored.forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'row';
+    row.dataset.playerId = r.player_id;
 
     const peak = fmt(r.peak_z);
     const winning = fmt(r.winning_z);
@@ -505,6 +625,22 @@ function render(){
 
 searchEl.addEventListener('input', (e) => {
   searchTerm = e.target.value;
+  render();
+});
+
+rowsEl.addEventListener('click', (e) => {
+  const rowEl = e.target.closest('.row');
+  if (!rowEl) return;
+  const player = allRows.find(r => String(r.player_id) === rowEl.dataset.playerId);
+  if (!player) return;
+  currentView = 'detail';
+  selectedPlayer = player;
+  render();
+});
+
+document.getElementById('backToList').addEventListener('click', () => {
+  currentView = 'list';
+  selectedPlayer = null;
   render();
 });
 
