@@ -456,7 +456,7 @@ function render(){
 
     row.innerHTML = `
       <span class="rank">${i + 1}</span>
-      <span><span class="name">${r.player_name}</span><span class="season">${r.prime_span_start} – ${r.prime_span_end}</span></span>
+      <span><span class="name">${r.player_name}</span><span class="season">Prime: ${r.prime_span_start} – ${r.prime_span_end}</span></span>
       <span class="composite">${fmt(r.composite)}</span>
       <span class="stat col-peak ${peak === null ? 'na' : ''}">${peak ?? '—'}</span>
       <span class="stat col-winning ${winning === null ? 'na' : ''}">${winning ?? '—'}</span>
