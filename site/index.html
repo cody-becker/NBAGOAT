@@ -296,14 +296,15 @@
 <body>
 
 <header>
-  <p class="eyebrow">NBAGOAT / player-season leaderboard</p>
+  <p class="eyebrow">NBAGOAT / all-time career leaderboard</p>
   <h1>Set the mix.<br>See who's the GOAT.</h1>
   <p class="sub">
     There's no single correct GOAT list — just a blend of what you value.
     Drag the faders to weight <strong>peak dominance</strong>, <strong>winning impact</strong>,
     <strong>era influence</strong>, and <strong>longevity</strong>, and the leaderboard re-ranks
-    live. This currently ranks individual <strong>player-seasons</strong>, not full careers — a
-    proper career view is still on the way.
+    live. Peak, winning, and era are averaged across each player's identified
+    <strong>prime seasons</strong> — genuinely elite years, not just any season played.
+    A player with no such season won't appear here at all.
   </p>
 </header>
 
@@ -432,7 +433,7 @@ function render(){
 
   countEl.textContent = term
     ? `${scored.length} match${scored.length === 1 ? '' : 'es'}`
-    : `Top 100 of ${allRows.length} player-seasons`;
+    : `Top 100 of ${allRows.length} careers`;
 
   rowsEl.innerHTML = '';
 
@@ -455,7 +456,7 @@ function render(){
 
     row.innerHTML = `
       <span class="rank">${i + 1}</span>
-      <span><span class="name">${r.player_name}</span><span class="season">${r.season}</span></span>
+      <span><span class="name">${r.player_name}</span><span class="season">${r.prime_span_start} – ${r.prime_span_end}</span></span>
       <span class="composite">${fmt(r.composite)}</span>
       <span class="stat col-peak ${peak === null ? 'na' : ''}">${peak ?? '—'}</span>
       <span class="stat col-winning ${winning === null ? 'na' : ''}">${winning ?? '—'}</span>
@@ -473,14 +474,14 @@ searchEl.addEventListener('input', (e) => {
 
 buildFaders();
 
-fetch('player_scores.json')
+fetch('career_scores.json')
   .then(res => res.json())
   .then(data => {
     allRows = data;
     render();
   })
   .catch(err => {
-    rowsEl.innerHTML = '<div class="empty">Could not load player_scores.json — make sure it sits in the same folder as this file.</div>';
+    rowsEl.innerHTML = '<div class="empty">Could not load career_scores.json — make sure it sits in the same folder as this file.</div>';
     console.error(err);
   });
 </script>
