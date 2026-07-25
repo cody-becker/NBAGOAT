@@ -197,6 +197,20 @@
     color: var(--slate);
   }
 
+  .copy-link-btn{
+    margin-top: 16px;
+    width: 100%;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .copy-link-btn:hover{ border-color: var(--wood); }
+
   /* ---------- Search ---------- */
   .toolbar{
     display: flex;
@@ -318,6 +332,7 @@
       2025-26, using nba_api for 1996-97 onward and Basketball-Reference as
       the full backbone for everything before that.
     </p>
+    <button id="copyLink" class="copy-link-btn">Copy this mix as a link</button>
   </div>
 
   <div>
@@ -357,6 +372,26 @@ const rowsEl = document.getElementById('rows');
 const countEl = document.getElementById('count');
 const searchEl = document.getElementById('search');
 
+function readWeightsFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const urlMap = { peak: 'peak_z', win: 'winning_z', era: 'era_score', long: 'longevity_z' };
+  Object.entries(urlMap).forEach(([param, key]) => {
+    const val = Number(params.get(param));
+    if (!isNaN(val) && params.get(param) !== null){
+      WEIGHTS[key] = Math.max(0, Math.min(100, val));
+    }
+  });
+}
+
+function updateURL(){
+  const params = new URLSearchParams();
+  params.set('peak', WEIGHTS.peak_z);
+  params.set('win', WEIGHTS.winning_z);
+  params.set('era', WEIGHTS.era_score);
+  params.set('long', WEIGHTS.longevity_z);
+  history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+}
+
 function buildFaders(){
   FADER_META.forEach(meta => {
     const wrap = document.createElement('div');
@@ -381,6 +416,7 @@ function buildFaders(){
     input.addEventListener('input', () => {
       WEIGHTS[meta.key] = Number(input.value);
       readout.textContent = WEIGHTS[meta.key];
+      updateURL();
       render();
     });
 
@@ -472,7 +508,18 @@ searchEl.addEventListener('input', (e) => {
   render();
 });
 
+readWeightsFromURL();
 buildFaders();
+updateURL();
+
+document.getElementById('copyLink').addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    const btn = document.getElementById('copyLink');
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+});
 
 fetch('career_scores.json')
   .then(res => res.json())
