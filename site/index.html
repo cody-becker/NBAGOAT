@@ -333,6 +333,13 @@
     font-size: 13px;
     margin: 0 0 28px;
   }
+  .detail-description{
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--chalk);
+    max-width: 640px;
+    margin: 0 0 28px;
+  }
   .detail-mix-label{
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
@@ -422,6 +429,7 @@
     <button id="backToList" class="back-btn">&larr; Back to leaderboard</button>
     <h2 id="detailName" class="detail-name"></h2>
     <p id="detailSpan" class="detail-span"></p>
+    <p id="detailDescription" class="detail-description"></p>
     <p class="detail-mix-label">Current mix, at today's slider weights</p>
     <p id="detailComposite" class="detail-composite"></p>
     <div class="detail-stats">
@@ -455,6 +463,7 @@ const FADER_META = [
 ];
 
 let allRows = [];
+let descriptions = {};
 let searchTerm = '';
 
 const fadersEl = document.getElementById('faders');
@@ -561,6 +570,16 @@ function renderDetail(){
   document.getElementById('detailName').textContent = selectedPlayer.player_name;
   document.getElementById('detailSpan').textContent =
     `Prime: ${selectedPlayer.prime_span_start} – ${selectedPlayer.prime_span_end} (${selectedPlayer.prime_season_count} season${selectedPlayer.prime_season_count === 1 ? '' : 's'})`;
+
+  const descEl = document.getElementById('detailDescription');
+  const description = descriptions[String(selectedPlayer.player_id)];
+  if (description){
+    descEl.textContent = description;
+    descEl.style.display = 'block';
+  } else {
+    descEl.style.display = 'none';
+  }
+
   document.getElementById('detailComposite').textContent = fmt(composite) ?? '—';
   document.getElementById('detailPeak').textContent = fmt(selectedPlayer.peak_z) ?? '—';
   document.getElementById('detailWinning').textContent = fmt(selectedPlayer.winning_z) ?? '—';
@@ -667,6 +686,14 @@ fetch('career_scores.json')
     rowsEl.innerHTML = '<div class="empty">Could not load career_scores.json — make sure it sits in the same folder as this file.</div>';
     console.error(err);
   });
+
+// Descriptions are optional - most players won't have one yet while the
+// batch is still running, and the site should work completely fine
+// without this file existing at all
+fetch('player_descriptions.json')
+  .then(res => res.json())
+  .then(data => { descriptions = data; })
+  .catch(() => { descriptions = {}; });
 </script>
 
 </body>
