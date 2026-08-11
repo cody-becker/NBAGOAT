@@ -376,6 +376,66 @@
 
   .row{ cursor: pointer; }
   .row:hover{ background: var(--panel-raised); }
+
+  /* ---------- Compare view ---------- */
+  .compare-header{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .compare-search{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 9px 14px;
+    border-radius: 7px;
+    width: 100%;
+    outline: none;
+    margin-top: 8px;
+  }
+  .compare-search:focus-visible{ border-color: var(--wood); }
+  .compare-search-results{
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .compare-result-row{
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .compare-result-row:last-child{ border-bottom: none; }
+  .compare-result-row:hover{ background: var(--panel-raised); }
+  .change-opponent-btn{
+    background: none;
+    border: none;
+    color: var(--slate);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 6px;
+    text-decoration: underline;
+  }
+  .change-opponent-btn:hover{ color: var(--chalk); }
+  .compare-stat-row{
+    display: grid;
+    grid-template-columns: 1fr 100px 100px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .compare-stat-row:last-child{ border-bottom: none; }
+  .compare-stat-row span:not(:first-child){
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--slate);
+    text-align: right;
+  }
 </style>
 </head>
 <body>
@@ -427,6 +487,7 @@
 
   <div id="detailView" style="display:none;">
     <button id="backToList" class="back-btn">&larr; Back to leaderboard</button>
+    <button id="openCompare" class="back-btn">&#8644; Compare</button>
     <h2 id="detailName" class="detail-name"></h2>
     <p id="detailSpan" class="detail-span"></p>
     <p id="detailDescription" class="detail-description"></p>
@@ -451,6 +512,12 @@
       </div>
     </div>
   </div>
+
+  <div id="compareView" style="display:none;">
+    <button id="backFromCompare" class="back-btn">&larr; Back to leaderboard</button>
+    <div class="compare-header" id="compareHeader"></div>
+    <div class="detail-stats" id="compareStats"></div>
+  </div>
 </main>
 
 <script>
@@ -474,6 +541,9 @@ const detailViewEl = document.getElementById('detailView');
 
 let currentView = 'list';
 let selectedPlayer = null;
+let comparePlayer = null;
+let compareSearchTerm = '';
+const compareViewEl = document.getElementById('compareView');
 const searchEl = document.getElementById('search');
 
 function readWeightsFromURL(){
@@ -561,6 +631,94 @@ function fmt(val){
   return val.toFixed(2);
 }
 
+function openCompare(playerA){
+  currentView = 'compare';
+  selectedPlayer = playerA;
+  comparePlayer = null;
+  compareSearchTerm = '';
+  render();
+}
+
+function renderCompareSearchResults(){
+  const resultsEl = document.getElementById('compareSearchResults');
+  if (!resultsEl) return;
+  const term = compareSearchTerm.trim().toLowerCase();
+  if (!term){
+    resultsEl.innerHTML = '';
+    return;
+  }
+  const matches = allRows
+    .filter(r => String(r.player_id) !== String(selectedPlayer.player_id))
+    .filter(r => r.player_name.toLowerCase().includes(term))
+    .slice(0, 8);
+  resultsEl.innerHTML = matches
+    .map(r => `<div class="compare-result-row" data-player-id="${r.player_id}">${r.player_name}</div>`)
+    .join('');
+}
+
+function renderCompare(){
+  listViewEl.style.display = 'none';
+  detailViewEl.style.display = 'none';
+  compareViewEl.style.display = 'block';
+
+  const compositeA = computeComposite(selectedPlayer);
+  const compositeB = comparePlayer ? computeComposite(comparePlayer) : null;
+  const headerEl = document.getElementById('compareHeader');
+
+  headerEl.innerHTML = `
+    <div class="compare-col">
+      <h2 class="detail-name">${selectedPlayer.player_name}</h2>
+      <p class="detail-span">Prime: ${selectedPlayer.prime_span_start} – ${selectedPlayer.prime_span_end}</p>
+      <p class="detail-composite">${fmt(compositeA) ?? '—'}</p>
+    </div>
+    <div class="compare-col">
+      ${comparePlayer ? `
+        <h2 class="detail-name">${comparePlayer.player_name}</h2>
+        <p class="detail-span">Prime: ${comparePlayer.prime_span_start} – ${comparePlayer.prime_span_end}</p>
+        <p class="detail-composite">${fmt(compositeB) ?? '—'}</p>
+        <button class="change-opponent-btn" id="changeOpponent">change opponent</button>
+      ` : `
+        <p class="detail-mix-label">Pick an opponent</p>
+        <input id="compareSearch" type="text" class="compare-search" placeholder="Search a player…" autocomplete="off" value="${compareSearchTerm}" />
+        <div id="compareSearchResults" class="compare-search-results"></div>
+      `}
+    </div>
+  `;
+
+  if (!comparePlayer){
+    const searchInput = document.getElementById('compareSearch');
+    searchInput.focus();
+    searchInput.setSelectionRange(compareSearchTerm.length, compareSearchTerm.length);
+    searchInput.addEventListener('input', (e) => {
+      compareSearchTerm = e.target.value;
+      renderCompareSearchResults();
+    });
+    renderCompareSearchResults();
+  } else {
+    document.getElementById('changeOpponent').addEventListener('click', () => {
+      comparePlayer = null;
+      render();
+    });
+  }
+
+  const statRows = [
+    ['Peak dominance', selectedPlayer.peak_z, comparePlayer ? comparePlayer.peak_z : undefined],
+    ['Winning impact', selectedPlayer.winning_z, comparePlayer ? comparePlayer.winning_z : undefined],
+    ['Era influence', selectedPlayer.era_score, comparePlayer ? comparePlayer.era_score : undefined],
+    ['Longevity', selectedPlayer.longevity_z, comparePlayer ? comparePlayer.longevity_z : undefined],
+  ];
+
+  document.getElementById('compareStats').innerHTML = statRows
+    .map(([label, a, b]) => `
+      <div class="compare-stat-row">
+        <span>${label}</span>
+        <span>${fmt(a) ?? '—'}</span>
+        <span>${comparePlayer ? (fmt(b) ?? '—') : '—'}</span>
+      </div>
+    `)
+    .join('');
+}
+
 function renderDetail(){
   listViewEl.style.display = 'none';
   detailViewEl.style.display = 'block';
@@ -593,8 +751,14 @@ function render(){
     return;
   }
 
+  if (currentView === 'compare'){
+    renderCompare();
+    return;
+  }
+
   listViewEl.style.display = 'block';
   detailViewEl.style.display = 'none';
+  compareViewEl.style.display = 'none';
 
   const term = searchTerm.trim().toLowerCase();
 
@@ -660,6 +824,26 @@ rowsEl.addEventListener('click', (e) => {
 document.getElementById('backToList').addEventListener('click', () => {
   currentView = 'list';
   selectedPlayer = null;
+  render();
+});
+
+document.getElementById('openCompare').addEventListener('click', () => {
+  openCompare(selectedPlayer);
+});
+
+document.getElementById('backFromCompare').addEventListener('click', () => {
+  currentView = 'list';
+  selectedPlayer = null;
+  comparePlayer = null;
+  render();
+});
+
+compareViewEl.addEventListener('click', (e) => {
+  const resultEl = e.target.closest('.compare-result-row');
+  if (!resultEl) return;
+  const player = allRows.find(r => String(r.player_id) === resultEl.dataset.playerId);
+  if (!player) return;
+  comparePlayer = player;
   render();
 });
 
