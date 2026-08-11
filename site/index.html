@@ -464,6 +464,7 @@
       the full backbone for everything before that.
     </p>
     <button id="copyLink" class="copy-link-btn">Copy this mix as a link</button>
+    <button id="surpriseMe" class="copy-link-btn">Surprise me</button>
   </div>
 
   <div id="listView">
@@ -858,6 +859,14 @@ document.getElementById('copyLink').addEventListener('click', () => {
     btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = original; }, 1500);
   });
+});
+
+document.getElementById('surpriseMe').addEventListener('click', () => {
+  if (allRows.length === 0) return;
+  const randomPlayer = allRows[Math.floor(Math.random() * allRows.length)];
+  currentView = 'detail';
+  selectedPlayer = randomPlayer;
+  render();
 });
 
 fetch('career_scores.json')
